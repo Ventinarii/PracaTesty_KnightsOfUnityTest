@@ -5,14 +5,29 @@ using static UnityEngine.UI.GridLayoutGroup;
 
 public class Tower : MonoBehaviour
 {
+    public static List<GameObject> Towers = new List<GameObject>();
+    static public bool Towers100 = false;
+
+    public static void UpdateTowerCount()
+    {
+        //update 
+        if (Towers.Count == 100 && !Towers100)
+        {
+            Towers100 = true;
+            Towers.ForEach(x => x.GetComponent<Tower>().Restart100());
+        }
+
+    }
+
+
     public float Timer = 6;
     private int Shoot = 12;
 
     // Start is called before the first frame update
     void Start()
     {
-        Main.Towers.Add(gameObject);
-        Main.main.UpdateTowerCount();
+        Towers.Add(gameObject);
+        UpdateTowerCount();
     }
 
     // Update is called once per frame
@@ -44,15 +59,15 @@ public class Tower : MonoBehaviour
 
     private void Fire()
     {
-        var Bullet = Main.main.GetBullet();
+        var BulletInstance = Bullet.GetBullet();
 
-        Bullet.transform.position = gameObject.transform.position;
-        Bullet.transform.rotation = gameObject.transform.rotation;
+        BulletInstance.transform.position = gameObject.transform.position;
+        BulletInstance.transform.rotation = gameObject.transform.rotation;
 
-        var Script  = Bullet.GetComponent<Bullet>();
+        var Script  = BulletInstance.GetComponent<Bullet>();
 
-        Script.Owner = gameObject;
-        Script.Direction = gameObject.transform.rotation * Vector3.up;
+        //Script.Owner = gameObject;
+        //Script.Direction = gameObject.transform.rotation * Vector3.up;
     }
 
     public void Restart100() {
@@ -66,7 +81,7 @@ public class Tower : MonoBehaviour
 
     private void OnDestroy()
     {
-        Main.Towers.Remove(gameObject);
-        Main.main.UpdateTowerCount();
+        Towers.Remove(gameObject);
+        UpdateTowerCount();
     }
 }

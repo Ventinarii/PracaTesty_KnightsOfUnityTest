@@ -5,73 +5,94 @@ using UnityEngine.UIElements;
 
 public class Bullet : MonoBehaviour
 {
-    public GameObject Tower;
+    //static members and functions
+    public static List<GameObject> Bullets = new List<GameObject>();
 
-    public GameObject Owner;
-    public Vector3 Direction;
+    public readonly GameObject BulletPrefab;
+    private static GameObject BulletPrefabStaticReference;
+    public static GameObject GetBullet()
+    {
+        if (Bullets.Count == 0)
+        {
+            var newBullet = Instantiate(BulletPrefabStaticReference);
+            Bullets.Add(newBullet);
+        }
 
-    private float Speed = 4f;
+        var giveBullet = Bullets[0];
+        Bullets.RemoveAt(0);
+
+        return giveBullet;
+    }
+    
+    public readonly GameObject TowerPrefab;
+
+    //instance code
+    private GameObject Owner;
+    private float Velocity = 4f;
     private float Timer;
+
+    private Rigidbody2D rb;
     // Start is called before the first frame update
     void Start()
     {
-        gameObject.GetComponent<Rigidbody2D>().velocity = Vector2.up * Speed;
-
-        SetTimer();
-
+        rb = GetComponent<Rigidbody2D>();
     }
 
     void Update() {
         if (0 < Timer)
         {
             Timer -= Time.deltaTime;
-
-            var position = gameObject.transform.position;
-            position += Direction * Speed * Time.deltaTime;
-            gameObject.transform.position = position;
         }
         else {
-            gameObject.SetActive(false);
-
-            if (!Main.Towers100)
-            {
-                var newTower = Instantiate(Tower);
-                newTower.transform.position = gameObject.transform.position;
-            }
-
-            var position = gameObject.transform.position;
-            position.z = -1000;
-            gameObject.transform.position = position;
-
-            Main.Bullets.Add(gameObject);
+            Stop();
         }
     }
 
-    public void Restart() {
+    private void Stop()
+    {
+        gameObject.SetActive(false);
 
+        if (!Tower.Towers100)
+        {
+            var newTower = Instantiate(TowerPrefab);
+            newTower.transform.position = gameObject.transform.position;
+        }
+
+        var position = gameObject.transform.position;
+        position.z = -1000;
+        gameObject.transform.position = position;
+
+        //return bullet to pool of bullets
+        Bullets.Add(gameObject);
+    }
+
+    public void Restart(GameObject Owner, Quaternion Rotation) {
         gameObject.SetActive(true);
 
+        //position
         var position = gameObject.transform.position;
         position.z = 0;
         gameObject.transform.position = position;
 
-        SetTimer();
-    }
+        //rotation
+        gameObject.transform.rotation = Rotation;
 
-    private void SetTimer() {
+        rb.velocity = gameObject.transform.rotation * Vector2.up * Velocity;
+
         var distanceRange = 4 - 1;
         var distance = (Random.value * distanceRange) + 1;
-        Timer = Speed / distance;
+        Timer = Velocity / distance;
     }
 
     private void OnTriggerEnter(Collider collision) {
         if(Owner != null)
             if (collision.gameObject == Owner)
                 return;
-        if (collision.gameObject.tag.Contains("Bullet"))
-            return;
 
-        GameObject.Destroy(Tower);
+        var Go = collision.gameObject;
+
+        GameObject.Destroy(Go);
         Timer = 0;
+        Stop();
     }
 }
